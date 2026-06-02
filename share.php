@@ -121,9 +121,7 @@ $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "
 // --- NUEVA LÓGICA DE DETECCIÓN DE PLATAFORMA ---
 // WhatsApp y Telegram prefieren la imagen original (ancha) para mostrar previsualización grande.
 // Facebook y Discord prefieren la imagen ajustada (1.91:1) para evitar recortes.
-$userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-// Algunos crawlers de WhatsApp usan "facebookexternalhit" pero incluyen "WhatsApp" en el string.
-$isWhatsApp = (stripos($userAgent, 'WhatsApp') !== false || stripos($userAgent, 'Telegram') !== false);
+$isWhatsApp = (stripos($userAgent, 'WhatsApp') !== false || stripos($userAgent, 'Telegram') !== false || stripos($userAgent, 'facebookexternalhit') !== false);
 
 if ($bannerId) {
     $redirectUrl = $baseUrl . "/index.html?banner=" . urlencode($bannerId);
