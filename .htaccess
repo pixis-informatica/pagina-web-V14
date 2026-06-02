@@ -60,6 +60,16 @@
     AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
 </IfModule>
 
+# --- Forzar a Hostinger a no cachear share.php en el Edge ---
+<Files "share.php">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+        Header set X-Accel-Buffering "no"
+    </IfModule>
+</Files>
+
 # --- Redirigir Robots de Redes Sociales al Mediador PHP (Social SEO) ---
 <IfModule mod_rewrite.c>
     RewriteEngine On
