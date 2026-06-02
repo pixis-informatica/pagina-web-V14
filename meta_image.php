@@ -42,17 +42,17 @@ $posY = ($canvasH - $newH) / 2;
 // 4. Copiar y redimensionar
 imagecopyresampled($canvas, $source, $posX, $posY, 0, 0, $newW, $newH, $width, $height);
 
-// 5. Salida con buffer para obtener el Content-Length (crucial para WhatsApp)
+// 5. Salida optimizada con Buffer (Detección de tamaño para WhatsApp)
 ob_start();
 imagejpeg($canvas, null, 90);
-$imageData = ob_get_clean();
+$data = ob_get_contents();
+$size = ob_get_length();
+ob_end_clean();
 
 header('Content-Type: image/jpeg');
-header('Content-Length: ' . strlen($imageData));
-header('Cache-Control: public, max-age=31536000'); // Cachear por 1 año
-header('Expires: ' . gmdate('D, d M Y H:i:s \G\M\T', time() + 31536000));
-
-echo $imageData;
+header('Cache-Control: public, max-age=604800');
+header('Content-Length: ' . $size);
+echo $data;
 
 // Limpiar
 imagedestroy($canvas);
