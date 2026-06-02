@@ -119,10 +119,11 @@ $CATEGORIAS_SEO = [
 $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]";
 
 // --- NUEVA LÓGICA DE DETECCIÓN DE PLATAFORMA ---
-// WhatsApp y Telegram prefieren la imagen original (ancha)
-// Facebook y Discord prefieren la imagen ajustada (1.91:1) para no recortar
+// WhatsApp y Telegram prefieren la imagen original (ancha) para mostrar previsualización grande.
+// Facebook y Discord prefieren la imagen ajustada (1.91:1) para evitar recortes.
 $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-$isWhatsApp = (strpos($userAgent, 'WhatsApp') !== false || strpos($userAgent, 'Telegram') !== false);
+// Algunos crawlers de WhatsApp usan "facebookexternalhit" pero incluyen "WhatsApp" en el string.
+$isWhatsApp = (stripos($userAgent, 'WhatsApp') !== false || stripos($userAgent, 'Telegram') !== false);
 
 if ($bannerId) {
     $redirectUrl = $baseUrl . "/index.html?banner=" . urlencode($bannerId);
@@ -347,6 +348,29 @@ if ($theBanner) {
     $image = $isWhatsApp ? $defaultImg : ($baseUrl . "/meta_image.php?url=" . urlencode($defaultImg));
 }
 
+// 3. Determinar dimensiones de la imagen (Crucial para WhatsApp)
+$imgWidth = 1200;
+$imgHeight = 630;
+$imgType = 'image/jpeg';
+
+if ($isWhatsApp) {
+    // Si es WhatsApp, mandamos la imagen directa. Intentamos obtener su tamaño real.
+    // Usamos el path relativo si es posible para no depender de allow_url_fopen
+    $localPath = '';
+    if (isset($directBannerImg)) $localPath = str_replace($baseUrl . '/', '', $directBannerImg);
+    elseif (isset($directCategoryImg)) $localPath = str_replace($baseUrl . '/', '', $directCategoryImg);
+    elseif (isset($directProductImage)) $localPath = str_replace($baseUrl . '/', '', $directProductImage);
+    elseif (isset($defaultImg)) $localPath = str_replace($baseUrl . '/', '', $defaultImg);
+
+    if ($localPath && file_exists(__DIR__ . '/' . $localPath)) {
+        $size = @getimagesize(__DIR__ . '/' . $localPath);
+        if ($size) {
+            $imgWidth = $size[0];
+            $imgHeight = $size[1];
+            $imgType = $size['mime'] ?? 'image/jpeg';
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -362,6 +386,9 @@ if ($theBanner) {
     <meta property="og:title" content="<?php echo htmlspecialchars($title); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars($description); ?>">
     <meta property="og:image" content="<?php echo htmlspecialchars($image); ?>">
+    <meta property="og:image:width" content="<?php echo $imgWidth; ?>">
+    <meta property="og:image:height" content="<?php echo $imgHeight; ?>">
+    <meta property="og:image:type" content="<?php echo $imgType; ?>">
     <meta property="og:image:alt" content="<?php echo htmlspecialchars($title); ?>">
     <meta property="og:url" content="<?php echo htmlspecialchars($redirectUrl); ?>">
     
